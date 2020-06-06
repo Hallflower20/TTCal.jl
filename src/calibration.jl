@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-const CalElementTypes = Union{Complex128, DiagonalJonesMatrix, JonesMatrix}
+const CalElementTypes = Union{ComplexF64, DiagonalJonesMatrix, JonesMatrix}
 
 struct Solution{P <: Polarization, T} <: AbstractVector{eltype(T)}
     data :: T
@@ -242,7 +242,7 @@ end
 ## * uncomment the corresponding tests in `test/calibration.jl`
 ##
 ##function write_for_python(filename, calibration::GainCalibration)
-##    gains = zeros(Complex128, 2, Nant(calibration), Nfreq(calibration))
+##    gains = zeros(ComplexF64, 2, Nant(calibration), Nfreq(calibration))
 ##    flags = zeros(      Bool,    Nant(calibration), Nfreq(calibration))
 ##    for β = 1:Nfreq(calibration), ant = 1:Nant(calibration)
 ##        gains[1,ant,β] = calibration.jones[ant,β].xx
@@ -253,7 +253,7 @@ end
 ##end
 ##
 ##function write_for_python(filename, calibration::PolarizationCalibration)
-##    gains = zeros(Complex128, 4, Nant(calibration), Nfreq(calibration))
+##    gains = zeros(ComplexF64, 4, Nant(calibration), Nfreq(calibration))
 ##    flags = zeros(      Bool,    Nant(calibration), Nfreq(calibration))
 ##    for β = 1:Nfreq(calibration), ant = 1:Nant(calibration)
 ##        gains[1,ant,β] = calibration.jones[ant,β].xx
