@@ -224,9 +224,9 @@ LinearAlgebra.transpose(J::JonesMatrix) = JonesMatrix(J.xx, J.yx, J.xy, J.yy)
 LinearAlgebra.transpose(J::DiagonalJonesMatrix) = J
 LinearAlgebra.transpose(J::HermitianJonesMatrix) = conj(J)
 
-LinearAlgebra.ctranspose(J::JonesMatrix) = JonesMatrix(conj(J.xx), conj(J.yx), conj(J.xy), conj(J.yy))
-LinearAlgebra.ctranspose(J::DiagonalJonesMatrix) = conj(J)
-LinearAlgebra.ctranspose(J::HermitianJonesMatrix) = J
+ctranspose(J::JonesMatrix) = JonesMatrix(conj(J.xx), conj(J.yx), conj(J.xy), conj(J.yy))
+ctranspose(J::DiagonalJonesMatrix) = conj(J)
+ctranspose(J::HermitianJonesMatrix) = J
 
 LinearAlgebra.adjoint(J::JonesMatrix) = JonesMatrix(conj(J.xx), conj(J.yx), conj(J.xy), conj(J.yy))
 LinearAlgebra.adjoint(J::DiagonalJonesMatrix) = conj(J)
