@@ -100,7 +100,7 @@ include("getspec.jl")
 include("fitvis.jl")
 include("calibration.jl")
 include("peel.jl")
-#include("commandline.jl")
+include("commandline.jl")
 
 end
 
