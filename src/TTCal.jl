@@ -82,6 +82,7 @@ include("data/visibilities.jl")
 include("data/datasets.jl")
 include("data/flagging.jl")
 include("data/rotate-phase-center.jl")
+include("data/transform.jl")
 
 include("instrument/beams.jl")
 include("instrument/genvis.jl")

@@ -14,8 +14,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using DocOpt
-include("data/TTCalDatasets.jl")
-using .TTCalDatasets
 
 doc = """
 TTCal is a calibration routine developed by Michael Eastwood for the Long Wavelength Array at the
@@ -71,7 +69,7 @@ Options:
 """
 
 function main(args)
-    parsed = docopt(doc, args, version=v"0.3.0")
+    parsed = docopt(doc, args, version=v"0.5.0")
     if     parsed["applycal"]
         run_applycal(parsed)
     elseif parsed["gaincal"]
@@ -94,6 +92,7 @@ end
 macro cli_intro(name)
     quote
         println("Running `", $(string(name)), "` on ", args["<ms>"])
+        routine_name = $(string(name))
     end |> esc
 end
 
@@ -141,13 +140,26 @@ end
 function run_applycal(args)
     @cli_intro applycal
     @cli_load_ms
-    cal = read(args["<cal>"])
+    
+    cal = read_cal(args["<cal>"])
+    
     write_to_corrected = args["--force-imaging"] || Tables.column_exists(ms, "CORRECTED_DATA")
     apply_to_corrected = args["--corrected"] && Tables.column_exists(ms, "CORRECTED_DATA")
-    data = apply_to_corrected? read(ms, "CORRECTED_DATA") : read(ms, "DATA")
-    applycal!(data, meta, cal)
-    write_to_corrected? write(ms, "CORRECTED_DATA", data) : write(ms, "DATA", data)
-    @cli_cleanup
+    data = apply_to_corrected? ms["CORRECTED_DATA"] : ms["DATA"]
+    
+    T = size(data)[1] == 2? Dual : Full 
+    dataset = array_to_ttcal(data, meta, 1, T)
+    applycal!(dataset, cal) 
+    data = convert.(Complex64, ttcal_to_array(dataset))
+    
+    if write_to_corrected
+        ms["CORRECTED_DATA"] = data
+    else
+        ms["DATA"] = data
+    end
+        
+    Tables.close(ms)
+    #@cli_cleanup
 end
 
 function run_gaincal(args)
@@ -156,11 +168,11 @@ function run_gaincal(args)
     @cli_load_sources
     @cli_load_beam
     @cli_convergence_criteria
-    data = read(ms, "DATA")
-    flag_short_baselines!(data, meta, minuvw)
-    cal = gaincal(data, meta, beam, sources, maxiter=maxiter, tolerance=tolerance)
-    write(args["<cal>"], cal)
-    @cli_cleanup
+    data = ms["DATA"]
+    dataset = array_to_ttcal(data, meta, 1, Dual)
+    cal = calibrate(dataset, sources, beam, maxiter=maxiter, tolerance=tolerance, minuvw=minuvw)
+    write_cal(args["<cal>"], cal)
+    Tables.close(ms)
 end
 
 function run_polcal(args)
@@ -169,11 +181,11 @@ function run_polcal(args)
     @cli_load_sources
     @cli_load_beam
     @cli_convergence_criteria
-    data = Tables.column_exists(ms, "CORRECTED_DATA")? read(ms, "CORRECTED_DATA") : read(ms, "DATA")
-    flag_short_baselines!(data, meta, minuvw)
-    cal = polcal(data, meta, beam, sources, maxiter=maxiter, tolerance=tolerance)
-    write(args["<cal>"], cal)
-    @cli_cleanup
+    data = ms["DATA"]
+    dataset = array_to_ttcal(data, meta, 1, Full)
+    cal = calibrate(dataset, sources, beam, maxiter=maxiter, tolerance=tolerance, minuvw=minuvw)
+    write_cal(args["<cal>"], cal)
+    Tables.close(ms)
 end
 
 for routine in (:peel, :shave, :zest, :prune)
@@ -184,35 +196,40 @@ for routine in (:peel, :shave, :zest, :prune)
         @cli_load_sources
         @cli_load_beam
         @cli_convergence_criteria
+
+        # Parse routine
+        T = routine_name in ("peel", "shave") ? Dual : Full
+        collapse_frequency = routine_name in ("peel", "zest") ? false : true
+
+        # Load the data
         if Tables.column_exists(ms, "CORRECTED_DATA")
             data = ms["CORRECTED_DATA"]
         else
             data = ms["DATA"]
         end
         
-        #peelingsources = $T[$T(source) for source in sources]
-        #calibrations = peel!(data, meta, beam, peelingsources,
-        #                     peeliter=peeliter, maxiter=maxiter, tolerance=tolerance)
-
-        println(size(data))
-        println(typeof(data))
-        T = size(data, 1) == 2 ? Dual : Full
+        # Compute the peel
         dataset = array_to_ttcal(data, meta, 1, T)
-        #flag_short_baselines!(dataset, minuvw)
-        println(polarization(dataset))
+        
         calibrations = peel!(dataset, beam, sources,
                              peeliter=peeliter, maxiter=maxiter,
-                             tolerance=tolerance, minuvw=minuvw)
-        data_out = convert.(Complex64, ttcal_to_array(dataset))
-        println(size(data_out))
-        println(typeof(data_out))
+                             tolerance=tolerance, minuvw=minuvw,
+                             collapse_frequency=collapse_frequency)
+        
+        data = convert.(Complex64, ttcal_to_array(dataset))
+
+        if routine_name in ("peel", "shave")
+            data_out = Tables.column_exists(ms, "CORRECTED_DATA") ? ms["CORRECTED_DATA"] : ms["DATA"]
+            data_out[[1, 4], :, :] = data
+        end
+        
+        #Output and clean up
         if Tables.column_exists(ms, "CORRECTED_DATA")
             ms["CORRECTED_DATA"] = data_out
         else
             ms["DATA"] = data_out
         end
         Tables.close(ms)
-        #@cli_cleanup
     end
 end
 
@@ -249,6 +266,21 @@ function select_beam(str)
             return SineBeam(parse(Float64, m.captures[1]))
         end
         error("Unknown beam model.")
+    end
+end
+
+
+# We'll just manage I/O here in lieu of a more
+# standardarized method.
+function read_cal(calfile)
+    jldopen(calfile*".jld2", false, false, false, IOStream) do file
+        return file["calibration"]
+    end
+end
+
+function write_cal(calfile, cal)
+    jldopen(calfile*".jld2", true, true, true, IOStream) do file
+        file["calibration"] = cal
     end
 end
 
