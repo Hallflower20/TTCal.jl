@@ -8,7 +8,7 @@ TTCal is a calibration routine developed for the OVRO LWA.
 
 **Documentation:** http://mweastwood.info/TTCal.jl/
 
-**Author:** Michael Eastwood
+**Author:** Michael Eastwood, Philippe Berger
 
 **License:** GPLv3+
 
