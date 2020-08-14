@@ -86,6 +86,7 @@ include("data/visibilities.jl")
 include("data/datasets.jl")
 include("data/flagging.jl")
 include("data/rotate-phase-center.jl")
+include("data/transform.jl")
 
 include("instrument/beams.jl")
 include("instrument/genvis.jl")
@@ -104,7 +105,7 @@ include("getspec.jl")
 include("fitvis.jl")
 include("calibration.jl")
 include("peel.jl")
-#include("commandline.jl")
+include("commandline.jl")
 
 end
 

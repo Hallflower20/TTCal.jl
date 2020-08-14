@@ -74,6 +74,15 @@ function Calibration(metadata; polarization=Full, collapse_frequency=false, coll
     Calibration(data)
 end
 
+function calibrate(data::Dataset, sky::SkyModel, beam::AbstractBeam;
+                   collapse_frequency=false, collapse_time=false,
+                   maxiter=50, tolerance=1e-3, minuvw=15.0, quiet=false)
+    model = genvis(data.metadata, beam, sky, polarization=polarization(data))
+    calibrate(data, model,
+              collapse_frequency=collapse_frequency, collapse_time=collapse_time,
+              maxiter=maxiter, tolerance=tolerance, minuvw=minuvw, quiet=quiet)
+end
+
 function calibrate(data::Dataset, model::Dataset;
                    collapse_frequency=false, collapse_time=false,
                    maxiter=50, tolerance=1e-3, minuvw=15.0, quiet=false)
