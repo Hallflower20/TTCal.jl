@@ -111,7 +111,7 @@ function calibrate!(calibration::Calibration, data::Dataset, model::Dataset,
             if !quiet
                 if !converged
                     print("\r")
-                    warn("Calibration did not converge (integration: $time, channel: $frequency")
+                    @warn ("Calibration did not converge (integration: $time, channel: $frequency")
                 end
                 next!(prg)
             end
@@ -130,7 +130,7 @@ function calibrate_onefrequency!(calibration::Calibration, data::Dataset, model:
         if !quiet
             if !converged
                 print("\r")
-                warn("Calibration did not converge (integration: $time)")
+                @warn ("Calibration did not converge (integration: $time)")
             end
             next!(prg)
         end
@@ -148,7 +148,7 @@ function calibrate_onetime!(calibration::Calibration, data::Dataset, model::Data
         if !quiet
             if !converged
                 print("\r")
-                warn("Calibration did not converge (channel: $frequency)")
+                @warn ("Calibration did not converge (channel: $frequency)")
             end
             next!(prg)
         end
@@ -161,7 +161,7 @@ function calibrate_onefrequency_onetime!(calibration::Calibration, data::Dataset
     model_slice = [getindex.(model[:], antenna) for antenna = 1:Nant(data)]
     converged = solve!(calibration[1, 1].data, data_slice, model_slice, maxiter, tolerance)
     if !quiet
-        converged || warn("Calibration did not converge")
+        converged || @warn ("Calibration did not converge")
         next!(prg)
     end
 end
