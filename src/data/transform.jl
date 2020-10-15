@@ -67,15 +67,22 @@ end
 
 function ttcal_to_array(ttcal_dataset)
     npol = polarization(ttcal_dataset) == Dual ? 2 : 4
-    data = zeros(Complex128, npol, Nfreq(ttcal_dataset), Nbase(ttcal_dataset))
-    for frequency in 1:Nfreq(ttcal_dataset)
-        visibilities = ttcal_dataset[frequency, 1]
-        α = 1
-        for antenna1 = 1:Nant(ttcal_dataset), antenna2 = antenna1:Nant(ttcal_dataset)
-            J = visibilities[antenna1, antenna2]
-            unpack_jones_matrix!(data, frequency, α, J, polarization(ttcal_dataset))
-            α += 1
+    data = zeros(Complex128, npol, Nfreq(ttcal_dataset), Nbase(ttcal_dataset), Ntime(ttcal_dataset))
+    for ti in 1:Ntime(ttcal_dataset)
+        _data = zeros(Complex128, npol, Nfreq(ttcal_dataset), Nbase(ttcal_dataset))
+        for frequency in 1:Nfreq(ttcal_dataset)
+            visibilities = ttcal_dataset[frequency, ti]
+            α = 1
+            for antenna1 = 1:Nant(ttcal_dataset), antenna2 = antenna1:Nant(ttcal_dataset)
+                J = visibilities[antenna1, antenna2]
+                unpack_jones_matrix!(_data, frequency, α, J, polarization(ttcal_dataset))
+                α += 1
+            end
         end
+        data[:, :, :, ti] = _data[:, :, :]
+    end
+    if Ntime(ttcal_dataset) == 1
+        data = data[:, :, :, 1]
     end
     data
 end
