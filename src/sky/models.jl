@@ -80,11 +80,11 @@ end
 function get_shapes(name, c)
     if haskey(c, "components")
         return [get_shapes(name, d) for d in c["components"]]
-    #elseif haskey(c, "rfi-frequencies") && haskey(c, "rfi-I")
-    #    # RFISource
-    #    position = get_source_position(c)
-    #    spectrum = get_rfi_spectrum(c)
-    #    source = RFISource(name, position, spectrum)
+    elseif haskey(c, "el")
+        # RFISource
+        position = get_source_position(c)
+        spectrum = get_source_spectrum(c)
+        return RFISource(position, spectrum, c["name"])
     else
         dir  = get_source_direction(name, c)
         spec = get_source_spectrum(c)
@@ -125,20 +125,20 @@ function get_source_direction(name, c)
     dir
 end
 
-#function get_source_position(c)
-#    sys  = c["sys"]
-#    el   = c["el"]*meters
-#    long = c["long"]*degrees
-#    lat  = c["lat"]*degrees
-#    if sys == "WGS84"
-#        pos = Position(pos"WGS84", el, long, lat)
-#    elseif sys == "ITRF"
-#        pos = Position(pos"ITRF", el, long, lat)
-#    else
-#        error("unknown coordinate system")
-#    end
-#    pos
-#end
+function get_source_position(c)
+    sys  = c["sys"]
+    el   = c["el"]#*meters
+    long = c["long"]#*degrees
+    lat  = c["lat"]#*degrees
+    if sys == "WGS84"
+        pos = Position(pos"WGS84", el, long, lat)
+    elseif sys == "ITRF"
+        pos = Position(pos"ITRF", el, long, lat)
+    else
+        error("unknown coordinate system")
+    end
+    pos
+end
 
 function get_source_spectrum(c)
     I = c["I"]
@@ -160,6 +160,7 @@ end
 #    stokes = [StokesVector(I[idx], Q[idx], U[idx], V[idx]) for idx = 1:N]
 #    RFISpectrum(channels, stokes)
 #end
+
 #
 #"""
 #    writesources(filename, sources)

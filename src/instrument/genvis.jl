@@ -66,9 +66,19 @@ function genvis!(dataset::Dataset, beam::AbstractBeam, shape::AbstractShape)
         set!(frame, time)
         if isabovehorizon(frame, shape)
             phase_center = measure(frame, metadata.phase_centers[idx], dir"ITRF")
-            direction    = measure(frame, shape.direction, dir"ITRF")
+            if typeof(shape) <: TTCal.RFISource #RFI sources need some special treatment
+                #itrf_position = measure(frame, source.position, pos"ITRF")
+                direction    = measure(frame, shape.position, pos"ITRF")
+            else
+                direction    = measure(frame, shape.direction, dir"ITRF")
+            end
             for (jdx, frequency) in enumerate(metadata.frequencies)
-                flux = observe_through_beam(shape, beam, frame, frequency)
+                if typeof(shape) <: TTCal.RFISource #RFI sources need some special treatment
+                    flux = shape.spectrum(frequency) |> HermitianJonesMatrix
+                else
+                    flux = observe_through_beam(shape, beam, frame, frequency)
+                end
+                
                 visibilities = dataset[jdx, idx]
                 genvis_onesource_onechannel!(visibilities, shape, frequency,
                                              flux, metadata.positions, direction, phase_center,

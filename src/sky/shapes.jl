@@ -41,6 +41,12 @@ struct Shapelet{Spectrum} <: AbstractShape{Spectrum}
     coeff :: Vector{Float64} # list of shapelet coefficients
 end
 
+struct RFISource{Spectrum} <: AbstractShape{Spectrum}
+    position :: Position
+    spectrum :: Spectrum
+    name :: String
+end
+
 #doc"""
 #    ShapeletSource <: Source
 #
@@ -63,7 +69,6 @@ end
 
 
 
-
 function isabovehorizon(frame::ReferenceFrame, direction::Direction; threshold=0)
     azel = measure(frame, direction, dir"AZEL")
     el = latitude(azel)
@@ -71,7 +76,11 @@ function isabovehorizon(frame::ReferenceFrame, direction::Direction; threshold=0
 end
 
 function isabovehorizon(frame::ReferenceFrame, shape::AbstractShape; threshold=0)
-    isabovehorizon(frame, shape.direction, threshold=threshold)
+    if typeof(shape) <: TTCal.RFISource
+        return true
+    else
+        return isabovehorizon(frame, shape.direction, threshold=threshold)
+    end
 end
 
 function isrising(frame::ReferenceFrame, shape::AbstractShape)
