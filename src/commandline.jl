@@ -203,13 +203,17 @@ for routine in (:peel, :shave, :zest, :prune)
 
         # Load the data
         if Tables.column_exists(ms, "CORRECTED_DATA")
-            data = ms["CORRECTED_DATA"]
+        #    data = ms["CORRECTED_DATA"]
+            dataset = Dataset(ms, column="CORRECTED_DATA", polarization=T)
         else
-            data = ms["DATA"]
+        #    data = ms["DATA"]
+            dataset = Dataset(ms, polarization=T)
         end
+
+        #input_npol = size(data)[1]
         
         # Compute the peel
-        dataset = array_to_ttcal(data, meta, 1, T)
+        #dataset = array_to_ttcal(data, meta, 1, T)
         
         calibrations = peel!(dataset, beam, sources,
                              peeliter=peeliter, maxiter=maxiter,
@@ -221,6 +225,8 @@ for routine in (:peel, :shave, :zest, :prune)
         if routine_name in ("peel", "shave")
             data_out = Tables.column_exists(ms, "CORRECTED_DATA") ? ms["CORRECTED_DATA"] : ms["DATA"]
             data_out[[1, 4], :, :] = data
+        else
+            data_out = data
         end
         
         #Output and clean up
