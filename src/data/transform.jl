@@ -56,7 +56,11 @@ function pack_jones_matrix(array, frequency, α, ::Type{Full})
                 array[3, frequency, α], array[4, frequency, α])
 end
 function pack_jones_matrix(array, frequency, α, ::Type{Dual})
-    DiagonalJonesMatrix(array[1, frequency, α], array[2, frequency, α])
+    if size(array)[1] == 2
+        DiagonalJonesMatrix(array[1, frequency, α], array[2, frequency, α])
+    else
+        DiagonalJonesMatrix(array[1, frequency, α], array[4, frequency, α])
+    end
 end
 function pack_jones_matrix(array, frequency, α, ::Type{XX})
     array[1, frequency, α]
