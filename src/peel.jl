@@ -15,9 +15,9 @@
 
 function peel!(dataset::Dataset, beam::AbstractBeam, sky::SkyModel;
                peeliter=5, maxiter=50, tolerance=1e-3, minuvw=15.0, quiet = false,
-               collapse_frequency=false, collapse_time=false)
+               collapse_frequency=false, collapse_time=false, threshold = 0)
     frame = ReferenceFrame(dataset.metadata)
-    sky = SkyModel(filter(s->isabovehorizon(frame, s), sky.sources))
+    sky = SkyModel(filter(s->isabovehorizon(frame, s, threshold=deg2rad(threshold)), sky.sources))
     coherencies  = [genvis(dataset.metadata, beam, source, polarization=polarization(dataset))
                     for source in sky.sources]
     calibrations = [Calibration(dataset.metadata, polarization=polarization(dataset),

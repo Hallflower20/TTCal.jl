@@ -30,7 +30,7 @@ Usage:
     ttcal.jl polcal <ms> <cal> <sources> [--beam BEAM]
         [--maxiter ITERS] [--tolerance TOL] [--force-imaging] [--minuvw MINUVW]
     ttcal.jl peel <ms> <sources> [--beam BEAM]
-        [--peeliter PITERS] [--maxiter ITERS] [--tolerance TOL] [--minuvw MINUVW]
+        [--peeliter PITERS] [--maxiter ITERS] [--tolerance TOL] [--minuvw MINUVW] [--threshold THRESHOLD]
     ttcal.jl shave <ms> <sources> [--beam BEAM]
         [--peeliter PITERS] [--maxiter ITERS] [--tolerance TOL] [--minuvw MINUVW]
     ttcal.jl zest <ms> <sources> [--beam BEAM]
@@ -66,6 +66,9 @@ Options:
         The minimum baseline length (measured in wavelengths) to use while peeling sources. This
         parameter can be used to mitigate sensitivity to unmodeled diffuse emission. This parameter
         defaults to 0.
+    --threshold THRESHOLD
+        This number defines the minimum altitude at which you wish to peel all objects. If the object
+        is below this threshold is will not be peeled. Default is 0.
 """
 
 function main(args)
@@ -128,6 +131,11 @@ macro cli_convergence_criteria()
         minuvw = args["--minuvw"] === nothing? 0.0 : parse(Float64, args["--minuvw"])
     end |> esc
 end
+
+macro cli_load_threshold()
+    quote
+        threshold = args["--threshold"] ===nothing? 0 : parse(Float64, args["--threshold"])
+    end |> esc
 
 macro cli_cleanup()
     quote
@@ -196,6 +204,7 @@ for routine in (:peel, :shave, :zest, :prune)
         @cli_load_sources
         @cli_load_beam
         @cli_convergence_criteria
+        @cli_load_threshold
 
         # Parse routine
         T = routine_name in ("peel", "shave") ? Dual : Full
@@ -218,7 +227,8 @@ for routine in (:peel, :shave, :zest, :prune)
         calibrations = peel!(dataset, beam, sources,
                              peeliter=peeliter, maxiter=maxiter,
                              tolerance=tolerance, minuvw=minuvw,
-                             collapse_frequency=collapse_frequency)
+                             collapse_frequency=collapse_frequency,
+                             threshold = threshold)
         
         data = convert.(Complex64, ttcal_to_array(dataset))
 
