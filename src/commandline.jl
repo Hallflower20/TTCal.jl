@@ -136,6 +136,7 @@ macro cli_load_threshold()
     quote
         threshold = args["--threshold"] ===nothing? 0 : parse(Float64, args["--threshold"])
     end |> esc
+end
 
 macro cli_cleanup()
     quote
